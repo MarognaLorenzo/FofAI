@@ -139,7 +139,10 @@ def breadthFirstSearch(problem: SearchProblem) -> List[Directions]:
     q.push((problem.getStartState(), []))
     visited = set([problem.getStartState()])
 
-    while q:
+    i = 0
+    while len(q.list) > 0:
+        # print(i)
+        i += 1
         node = q.pop()
         if problem.isGoalState(node[0]):
             return node[1]
@@ -150,6 +153,8 @@ def breadthFirstSearch(problem: SearchProblem) -> List[Directions]:
                 next_path = node[1].copy()
                 next_path.append(dir)
                 q.push((next_state,next_path))
+
+    print("No RESULT FOUND")
     return None
 
 
@@ -190,12 +195,8 @@ def WRONGaStarSearch(problem: SearchProblem, heuristic=nullHeuristic) -> List[Di
     visited = set()
     q = util.PriorityQueue()
     q.push(problem.getStartState(), heuristic(problem.getStartState(), problem))
-    # for el in q.heap:
-    #     print(el)
     path = {problem.getStartState(): []}
     cost_dict = {problem.getStartState(): 0}
-    # print(heuristic, heuristic(problem.getStartState(), problem))
-    # print(heuristic) 
     while q:
         first = q.heap[0]
         state = q.pop()
@@ -227,9 +228,9 @@ def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic) -> List[Directi
             return path[state]
         for(next_state, dir, cost) in problem.getSuccessors(state):
             if next_state not in cost_dict or cost_dict[next_state] > cost_dict[state] + cost:
-                    print("update", state, next_state)
+                    # print("update", state, next_state)
+                    # print(f"From {cost_dict[next_state] if next_state in cost_dict else "none"} to {cost_dict[state] + cost}")
                     cost_dict[next_state] = cost_dict[state] + cost
-                    print(f"From {cost_dict[next_state]} to {cost_dict[state] + cost}")
                     path[next_state] = path[state].copy() + [dir]
                     q.update(next_state, cost_dict[next_state] + heuristic(next_state, problem))
     return None

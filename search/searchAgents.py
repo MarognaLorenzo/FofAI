@@ -285,6 +285,8 @@ class CornersProblem(search.SearchProblem):
         self.startingPosition = startingGameState.getPacmanPosition()
         top, right = self.walls.height-2, self.walls.width-2
         self.corners = ((1,1), (1,top), (right, 1), (right, top))
+        # self.available = [(x, y) for x in range(self.walls.height)]
+
         for corner in self.corners:
             if not startingGameState.hasFood(*corner):
                 print('Warning: no food in corner ' + str(corner))
@@ -295,15 +297,13 @@ class CornersProblem(search.SearchProblem):
         Returns the start state (in your state space, not the full Pacman state
         space)
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return (self.startingPosition, ())
 
     def isGoalState(self, state: Any):
         """
         Returns whether this search state is a goal state of the problem.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return state[1] == self.corners
 
     def getSuccessors(self, state: Any):
         """
@@ -320,12 +320,28 @@ class CornersProblem(search.SearchProblem):
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
             # Add a successor state to the successor list if the action is legal
             # Here's a code snippet for figuring out whether a new position hits a wall:
-            #   x,y = currentPosition
-            #   dx, dy = Actions.directionToVector(action)
-            #   nextx, nexty = int(x + dx), int(y + dy)
-            #   hitsWall = self.walls[nextx][nexty]
+            # print(state)
+            x,y = state[0]
+            found_so_far = state[1]
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            next_position = (nextx, nexty)
+            # print(f"next pos: {next_position}")
+            if self.walls[nextx][nexty]:
+                # print("skipping")
+                continue
+            if next_position in self.corners and next_position not in list(found_so_far):
+                new_found = list(found_so_far).copy()
+                new_found.append(next_position)
+                next_state = (next_position, tuple(sorted(new_found)))
+            else:
+                next_state = (next_position, state[1])
+            # print(f"appending {next_position}")
+            # if self.getCostOfActions([action]) == 999999:
+            #     print("WIERD ACTION: ", action, next_position, self.walls[nextx][nexty])
+            # successors.append((next_state, action, self.getCostOfActions([action])))
+            successors.append((next_state, action, 1))
 
-            "*** YOUR CODE HERE ***"
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -360,10 +376,31 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     """
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
+    pos = state[0]
+    found_so_far = state[1]
 
-    "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    def man_points(xy1, xy2):
+        return abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
+    def eucl(xy1, xy2):
+        return ( (xy1[0] - xy2[0]) ** 2 + (xy1[1] - xy2[1]) ** 2 ) ** 0.5
 
+
+    sum_dist = 0
+    added_corners = []
+
+
+    while True:
+        distances = [(man_points(pos, corner), corner) for corner in corners if corner not in found_so_far and corner not in added_corners]
+        if len(distances) == 0:
+            break
+        dist_to_add, pos = min(distances)
+        added_corners.append(pos)
+        sum_dist += dist_to_add
+
+    #     print(f"Go to {pos} with cost {dist_to_add}")
+    # print(f"total cost: {sum_dist}")
+    
+    return sum_dist
 
 
 class AStarCornersAgent(SearchAgent):
@@ -451,9 +488,31 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
-    position, foodGrid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+    # def man_dist(xy1, xy2):
+    #     return abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
+
+    # position, foodGrid = state
+
+    # foodlist = foodGrid.asList()
+    # print(foodlist)
+
+    # if len(foodlist) == 0:
+    #     return 0
+    # sum_dist = 0
+    # added_foods = []
+
+
+    # while True:
+    #     distances = [(man_dist(position, food), food) for food in foodlist if food not in added_foods]
+    #     if len(distances) == 0:
+    #         break
+    #     dist_to_add, position = min(distances)
+    #     added_foods.append(position)
+    #     sum_dist += dist_to_add
+
+
+    # return sum_dist
+    return len(state[1].asList())
 
 
 class ClosestDotSearchAgent(SearchAgent):
@@ -484,8 +543,23 @@ class ClosestDotSearchAgent(SearchAgent):
         walls = gameState.getWalls()
         problem = AnyFoodSearchProblem(gameState)
 
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        q = util.Queue()
+        q.push((problem.getStartState(), []))
+        visited = set([problem.getStartState()])
+
+        while len(q.list) > 0:
+            node = q.pop()
+            x,y = node[0]
+            if food[x][y]:
+                return node[1]
+            for (next_state, dir, _) in problem.getSuccessors(node[0]):
+                if next_state not in visited:
+                    visited.add(next_state)
+                    next_path = node[1].copy() + [dir]
+                    q.push((next_state,next_path))
+
+        print("No RESULT FOUND")
+        return None
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
