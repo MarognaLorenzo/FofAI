@@ -486,12 +486,12 @@ if __name__ == '__main__':
     # GET THE AGENT
     ###########################
 
-    import valueIterationAgents, learningAgents
+    import valueIterationAgents
     a = None
     if opts.agent == 'value':
         a = valueIterationAgents.ValueIterationAgent(mdp, opts.discount, opts.iters)
     elif opts.agent == 'learn':
-        print("HERE")
+        import qlearningAgents
         gridWorldEnv = GridworldEnvironment(mdp)
         actionFn = lambda state: mdp.getPossibleActions(state)
         qLearnOpts = {'gamma': opts.discount,
@@ -500,6 +500,7 @@ if __name__ == '__main__':
                       'actionFn': actionFn}
         a = qlearningAgents.LearnedQAgent(gridWorldEnv.gridWorld, **qLearnOpts)
     elif opts.agent == 'q':
+        import qlearningAgents
         #env.getPossibleActions, opts.discount, opts.learningRate, opts.epsilon
         #simulationFn = lambda agent, state: simulation.GridworldSimulation(agent,state,mdp)
         gridWorldEnv = GridworldEnvironment(mdp)
